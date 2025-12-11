@@ -1,4 +1,5 @@
 //Creators: Chris Aboujaoude, Ervin Martinez, Tevon Westby, Zachary Duggan
+#include <LiquidCrystal.h>
 #define RBE       0x80
 #define TBE       0x20
 
@@ -38,8 +39,20 @@ volatile unsigned char *myPCMSK0 = (unsigned char *) 0x6B;
 typedef enum STATE {DISABLED, IDLE, ERROR, RUNNING} STATE;
 STATE dev_state = DISABLED;
 
+#define LCD_LEN   16
+  #define LCD_RS    12
+  #define LCD_EN    11
+  #define LCD_D4    6
+  #define LCD_D5    5
+  #define LCD_D6    4
+  #define LCD_D7    3
+  LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
+  char lcd_buf[LCD_LEN], err_msg[LCD_LEN];
+  char state_map[4][16] = {"(DISABLED)", "IDLE", "ERROR", "RUNNING"};
+  unsigned char led_mask_map[4] = {YLED_MASK, GLED_MASK, RLED_MASK, BLED_MASK};
 
 void setup() {
+  lcd.begin(16,2);
   IO_INIT();
   ADC_INIT();
   UART0_INIT(9600);
@@ -55,9 +68,35 @@ void loop(){
       break;
     case RUNNING:
         break;
+  lcd.setCursor(0, 1);
+    lcd.print(state_map[dev_state]);
+
+ LED_UPDATE(dev_state);
+    switch(dev_state){
+      case DISABLED:
+        *PORT_B &= ~FAN_MASK;
+        break;
+      case IDLE:
+        *PORT_B &= ~FAN_MASK;
+        lcd.setCursor(0, 0);
+        lcd.print(lcd_buf);
+        break;
+      case ERROR:
+        *PORT_B &= ~FAN_MASK;
+        lcd.setCursor(0, 0);
+        lcd.print(err_msg);
+        break;
+      case RUNNING:
+        lcd.setCursor(0, 0);
+        lcd.print(lcd_buf);
+        *PORT_B |= FAN_MASK;
+        break;
+    }
   }
 }
-
+void LED_UPDATE(STATE state){
+    *PORT_C = led_mask_map[state];
+  }
 ISR(PCINT0_vect){
   if (*PIN_B & RES_BTN){
     if (dev_state == ERROR){
