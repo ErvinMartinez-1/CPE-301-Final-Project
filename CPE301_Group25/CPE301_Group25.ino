@@ -1,4 +1,8 @@
 //Creators: Chris Aboujaoude, Ervin Martinez, Tevon Westby, Zachary Duggan
+#include <Stepper.h>
+#include <RTClib.h>
+#include <string.h>
+#include <DHT.h>
 #include <LiquidCrystal.h>
 #define RBE  0x80
 #define TBE  0x20
@@ -56,48 +60,100 @@ char lcd_buf[LCD_LEN], err_msg[LCD_LEN];
  char state_map[4][16] = {"(DISABLED)", "IDLE", "ERROR", "RUNNING"};
 unsigned char led_mask_map[4] = {YLED_MASK, GLED_MASK, RLED_MASK, BLED_MASK};
 
+#define DHT_PIN   7
+#define DHTTYPE   DHT11
+#define REV_STEPS 2038
+
+Stepper step = Stepper(REV_STEPS, 28, 26, 24, 22);
+DHT dht(DHT_PIN, DHTTYPE);
+RTC_DS3231 rtc;
+STATE prev_state;
+
+const unsigned int temp_threshold = 42;
+const unsigned int wtr_threshold = 250;
+const unsigned int max_steps = 200;
+unsigned int wtr_level = 0;
+unsigned int update_timer = 0;
+
 void setup() {
    lcd.begin(16,2);
+    dht.begin();
+    rtc.begin();
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    lcd.clear();
+    step.setSpeed(2);
+
   IO_INIT();
   ADC_INIT();
   UART0_INIT(9600);
 }
 
 void loop(){
-  switch(dev_state){
-    case DISABLED:
-     break;
-   case IDLE:
-      break;
-    case ERROR:
-      break;
-    case RUNNING:
-        break;
-lcd.setCursor(0, 1);
-lcd.print(state_map[dev_state]);
+    DateTime now = rtc.now();
+    wtr_level = ADC_READ(0);
+    if (now.second() == 0){
+      load_ht(lcd_buf);
+    }
+    lcd.setCursor(0, 1);
+    lcd.print(state_map[dev_state]);
+    LED_UPDATE(dev_state);
 
- LED_UPDATE(dev_state);
-switch(dev_state){
-  case DISABLED:
- *PORT_B &= ~FAN_MASK;
-break;
- case IDLE:
-*PORT_B &= ~FAN_MASK;
-   lcd.setCursor(0, 0);
-  lcd.print(lcd_buf);
+    switch (dev_state){
+      case DISABLED:
+        *PORT_B &= ~FAN_MASK;
+        break;
+      case IDLE:
+        *PORT_B &= ~FAN_MASK;
+        lcd.setCursor(0, 0);
+        lcd.print(lcd_buf);
+        if ((int)dht.readTemperature(true) >= temp_threshold){
+          dev_state = RUNNING;
+        }
+        if (wtr_level < wtr_threshold){
+          snprintf(err_msg, LCD_LEN, "Low water!");
+          dev_state = ERROR;
+        }
         break;
       case ERROR:
-  *PORT_B &= ~FAN_MASK;
-     lcd.setCursor(0, 0);
+        *PORT_B &= ~FAN_MASK;
+        lcd.setCursor(0, 0);
         lcd.print(err_msg);
-    break;
+        break;
       case RUNNING:
-     lcd.setCursor(0, 0);
+        lcd.setCursor(0, 0);
         lcd.print(lcd_buf);
-   *PORT_B |= FAN_MASK;
+        *PORT_B |= FAN_MASK;
+        if ((unsigned int)dht.readTemperature(true) < temp_threshold){
+          dev_state = IDLE;
+          *PORT_C &= ~BLED_MASK;
+        }
+        if (wtr_level < wtr_threshold){
+          snprintf(err_msg, LCD_LEN, "Low water!");
+          dev_state = ERROR;
+          *PORT_C &= ~BLED_MASK;
+        }
         break;
     }
-  }
+
+    if (*PIN_B & CTRL_BTN){
+      unsigned char serial_buf[64];
+      snprintf(serial_buf, 64, "\nVENT POSITION UPDATED\n");
+      UART0_PUTSTR(serial_buf, strlen(serial_buf));
+      step.step(1);
+    }
+
+    if (prev_state != dev_state){
+      unsigned char serial_buf[256];
+      snprintf(serial_buf, 256, "\nSTATE TRANSISTION: %s -> %s", state_map[prev_state], state_map[dev_state]);
+      UART0_PUTSTR(serial_buf, strlen(serial_buf));
+      snprintf(serial_buf, 256, "\nCurrent Time: %02d:%02d:%02d\nCurrent Date: %d/%d/%d\n", \
+              now.hour(), now.minute(), now.second(), now.day(), now.month(), now.year());
+      UART0_PUTSTR(serial_buf, strlen(serial_buf));
+      if (dev_state == IDLE || dev_state == RUNNING) load_ht(lcd_buf);
+      lcd.clear();
+    }
+
+    prev_state = dev_state;
 }
 void LED_UPDATE(STATE state){
     *PORT_C = led_mask_map[state];
@@ -158,3 +214,39 @@ void UART0_INIT(unsigned long baud){
   *UCSR_0C = 0x06;
   *UBRR_0 = tbaud;
 }
+ void load_ht(char *buf){
+    int h_read = (int)dht.readHumidity();
+    int t_read = (int)dht.readTemperature(true);
+
+    snprintf(buf, LCD_LEN, "H:%d T:%dF", h_read, t_read);
+  }
+
+  unsigned int ADC_READ(unsigned char adc_channel_num){
+    *my_ADMUX  &= 0b11100000;
+    *my_ADCSRB &= 0b11110111;
+    
+    if(adc_channel_num > 7){
+      adc_channel_num -= 8;
+      *my_ADCSRB |= 0b00001000;
+    }
+    
+    *my_ADMUX  += adc_channel_num;
+    *my_ADCSRA |= 0x40;
+    
+    while((*my_ADCSRA & 0x40) != 0);
+    
+    return *my_ADC_DATA;
+  }
+
+  void UART0_PUTCHAR(unsigned char c){
+    while ((*UCSR_0A & TBE) == 0) {};
+    *UDR_0 = c;
+  }
+
+  void UART0_PUTSTR(unsigned char *s, int len){
+    while ((*UCSR_0A & TBE) == 0) {};
+    for (int i = 0; i < len && s[i] != '\0'; i++) {
+      while ((*UCSR_0A & TBE) == 0) {};
+      *UDR_0 = s[i];
+    }
+  }
