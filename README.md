@@ -1,5 +1,5 @@
-🧊 Swamp Cooler Simulation – Register-Level Arduino Control
-📌 Project Overview
+###🧊 Swamp Cooler Simulation – Register-Level Arduino Control 🧊
+##📌 Project Overview
 
 This project simulates the behavior of a swamp cooler (evaporative cooling system) using an Arduino microcontroller.
 
@@ -15,7 +15,7 @@ Interrupts
 
 The goal was to demonstrate low-level embedded systems understanding and precise hardware control.
 
-🎯 Objectives
+##🎯 Objectives
 
 Implement a finite-state machine to model swamp cooler behavior.
 
@@ -29,7 +29,7 @@ Configure registers manually instead of Arduino abstraction libraries.
 
 Simulate realistic system behavior.
 
-⚙️ System Architecture
+##⚙️ System Architecture
 Inputs
 
 Temperature sensor (analog input via ADC register configuration)
@@ -48,7 +48,7 @@ Status LEDs
 
 LCD display (optional, if used)
 
-🧠 State Machine Design
+##🧠 State Machine Design
 
 The system operates using a finite state machine:
 
@@ -66,7 +66,7 @@ Sensor threshold checks.
 
 Timer-based events.
 
-🔩 Register-Level Implementation
+##🔩 Register-Level Implementation
 
 Instead of using Arduino’s built-in functions, this project directly manipulated:
 
@@ -94,17 +94,15 @@ Better hardware understanding.
 
 Greater control over microcontroller behavior.
 
-🛠️ Technologies Used
+##🛠️ Technologies Used
 
 Microcontroller: Arduino (MEGA 2560 architecture)
 
-Language: 
-
-Development Environment: Arduino IDE
+Development Environment: Arduino IDE using C++
 
 Serial Monitor for debugging
 
-📊 Key Technical Takeaways
+##📊 Key Technical Takeaways
 
 Low-level hardware abstraction
 
@@ -118,7 +116,7 @@ State machine implementation
 
 Hardware-software interaction
 
-🧪 Testing & Validation
+##🧪 Testing & Validation
 
 Sensor values validated via Serial Monitor
 
@@ -128,7 +126,7 @@ Simulated edge cases for state transitions
 
 Manual debugging of register configurations
 
-🚀 How to Run
+##🚀 How to Run
 
 1) Clone the repository
 
