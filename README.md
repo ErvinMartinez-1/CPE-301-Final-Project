@@ -1,139 +1,78 @@
-###🧊 Swamp Cooler Simulation – Register-Level Arduino Control 🧊
-##📌 Project Overview
+# 🧊 Swamp Cooler Simulation 🧊
+### Register-Level Arduino Control (Embedded Systems Project)
 
-This project simulates the behavior of a swamp cooler (evaporative cooling system) using an Arduino microcontroller.
+---
 
-Unlike typical Arduino projects that rely on high-level functions such as digitalWrite() and analogRead(), this system was built by directly configuring and manipulating hardware registers to control:
+## 📌 Project Overview
 
-GPIO ports
+This project simulates the behavior of a **swamp cooler (evaporative cooling system)** using an Arduino microcontroller.
 
-ADC (Analog-to-Digital Converter)
+Unlike traditional Arduino implementations that rely on high-level abstraction functions such as `digitalWrite()` and `analogRead()`, this system was built by **directly configuring and manipulating hardware registers** to control:
 
-Timers
+- GPIO Ports  
+- Analog-to-Digital Converter (ADC)  
+- Timers / PWM  
+- External Interrupts  
 
-Interrupts
+The purpose of this project was to demonstrate low-level embedded systems understanding, efficient hardware control, and state-driven system design.
 
-The goal was to demonstrate low-level embedded systems understanding and precise hardware control.
+---
 
-##🎯 Objectives
+## 🎯 Project Objectives
 
-Implement a finite-state machine to model swamp cooler behavior.
+- Implement a finite state machine (FSM) to model swamp cooler behavior  
+- Read temperature and humidity sensors using manual ADC configuration  
+- Control fan and pump outputs using register manipulation  
+- Implement interrupt-driven state transitions  
+- Configure timers for PWM without Arduino helper functions  
+- Simulate realistic operational logic  
 
-Read temperature and humidity sensor inputs.
+---
 
-Control fan outputs.
+## 🧠 System Architecture
 
-Use interrupts for state transitions.
+### Inputs
+- Temperature Sensor (Analog via ADC registers)
+- Humidity Sensor (Analog via ADC registers)
+- Push Buttons (External Interrupts)
 
-Configure registers manually instead of Arduino abstraction libraries.
+### Outputs
+- Fan Motor (PWM via Timer registers)
+- Water Pump (Digital output)
+- Status LEDs
+- Serial Monitor (Debug output)
 
-Simulate realistic system behavior.
+---
 
-##⚙️ System Architecture
-Inputs
+## 🔄 Finite State Machine
 
-Temperature sensor (analog input via ADC register configuration)
+| State      | Description |
+|------------|-------------|
+| **Idle**   | System waiting for activation |
+| **Running**| Fan and pump operating |
+| **Cooling**| Active cooling based on sensor thresholds |
+| **Error**  | Triggered by invalid sensor readings |
 
-Humidity sensor (analog input)
+State transitions are controlled through:
+- External interrupts
+- Sensor threshold comparisons
+- Timer-based conditions
 
-Push buttons (interrupt-driven state changes)
+---
 
-Outputs
+## 🔩 Register-Level Implementation
 
-Fan motor (PWM via timer registers)
+This project avoids Arduino abstraction layers and directly manipulates AVR registers including:
 
-Water pump control
+- `DDRx`  → Data Direction Registers  
+- `PORTx` → Output Registers  
+- `PINx`  → Input Registers  
+- `ADMUX`, `ADCSRA` → ADC Configuration  
+- `TCCRnA`, `TCCRnB` → Timer Configuration  
+- `EIMSK`, `EICRA` → External Interrupt Control  
 
-Status LEDs
+### Example: Configuring a Pin as Output
 
-LCD display (optional, if used)
-
-##🧠 State Machine Design
-
-The system operates using a finite state machine:
-
-State	Description
-Idle	System waiting for activation
-Running	Fan + pump operating
-Cooling	Active cooling based on sensor thresholds
-Error	Triggered by invalid sensor readings
-
-Each state transition is controlled via:
-
-External interrupts.
-
-Sensor threshold checks.
-
-Timer-based events.
-
-##🔩 Register-Level Implementation
-
-Instead of using Arduino’s built-in functions, this project directly manipulated:
-
-DDRx registers (data direction control)
-
-PORTx registers (output control)
-
-PINx registers (input reading)
-
-ADCSRA, ADMUX (ADC configuration)
-
-TCCRnA, TCCRnB (timer configuration)
-
-EIMSK, EICRA (external interrupts)
-
-Example: Configuring a Pin as Output
-DDRB |= (1 << DDB5);  // Set PB5 as output
-PORTB |= (1 << PORTB5); // Set HIGH
-
-This approach provides:
-
-Faster execution.
-
-Better hardware understanding.
-
-Greater control over microcontroller behavior.
-
-##🛠️ Technologies Used
-
-Microcontroller: Arduino (MEGA 2560 architecture)
-
-Development Environment: Arduino IDE using C++
-
-Serial Monitor for debugging
-
-##📊 Key Technical Takeaways
-
-Low-level hardware abstraction
-
-Bitwise operations mastery
-
-Interrupt-driven architecture
-
-Real-time system design
-
-State machine implementation
-
-Hardware-software interaction
-
-##🧪 Testing & Validation
-
-Sensor values validated via Serial Monitor
-
-Verified PWM duty cycle using oscilloscope (if applicable)
-
-Simulated edge cases for state transitions
-
-Manual debugging of register configurations
-
-##🚀 How to Run
-
-1) Clone the repository
-
-2) Open project in Arduino IDE
-
-3) Upload to Arduino board
-
-4) Use serial monitor to observe system states
-
-5) Interact with input buttons to simulate behavior
+```c
+DDRB |= (1 << DDB5);      // Set PB5 as output
+PORTB |= (1 << PORTB5);   // Set PB5 HIGH
