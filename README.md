@@ -1,9 +1,9 @@
-# 🧊 Swamp Cooler Simulation 🧊
+#Swamp Cooler Simulation 
 ### Register-Level Arduino Control (Embedded Systems Project)
 
 ---
 
-## 📌 Project Overview
+##Project Overview
 
 This project simulates the behavior of a **swamp cooler (evaporative cooling system)** using an Arduino microcontroller.
 
@@ -18,7 +18,7 @@ The purpose of this project was to demonstrate low-level embedded systems unders
 
 ---
 
-## 🎯 Project Objectives
+##Project Objectives
 
 - Implement a finite state machine (FSM) to model swamp cooler behavior  
 - Read temperature and humidity sensors using manual ADC configuration  
@@ -29,7 +29,7 @@ The purpose of this project was to demonstrate low-level embedded systems unders
 
 ---
 
-## 🧠 System Architecture
+##System Architecture
 
 ### Inputs
 - Temperature Sensor (Analog via ADC registers)
@@ -44,7 +44,7 @@ The purpose of this project was to demonstrate low-level embedded systems unders
 
 ---
 
-## 🔄 Finite State Machine
+##Finite State Machine
 
 | State      | Description |
 |------------|-------------|
@@ -60,7 +60,7 @@ State transitions are controlled through:
 
 ---
 
-## 🔩 Register-Level Implementation
+##Register-Level Implementation
 
 This project avoids Arduino abstraction layers and directly manipulates AVR registers including:
 
