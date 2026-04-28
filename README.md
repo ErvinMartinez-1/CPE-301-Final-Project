@@ -29,7 +29,7 @@ The purpose of this project was to demonstrate low-level embedded systems unders
 
 ---
 
-##System Architecture
+## System Architecture
 
 ### Inputs
 - Temperature Sensor (Analog via ADC registers)
@@ -44,7 +44,7 @@ The purpose of this project was to demonstrate low-level embedded systems unders
 
 ---
 
-##Finite State Machine
+## Finite State Machine
 
 | State      | Description |
 |------------|-------------|
